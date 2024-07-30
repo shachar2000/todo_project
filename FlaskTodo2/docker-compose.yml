@@ -1,0 +1,55 @@
+version: '3'
+services:
+  app:
+    image: flask_app:latest
+    container_name: flask_app
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: mysql
+      DB_NAME: flask
+      DB_USER: flask
+      DB_PASSWORD: password
+    links:
+      - mysql
+    depends_on:
+      - mysql
+    ports:
+      - "5000:5000"
+
+  mysql:
+    container_name: flask_mysql
+    image: mysql:5.7
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      - /home/shachar/Desktop/FlaskTodo2-20240723T071957Z-001/FlaskTodo2/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: flask
+      MYSQL_USER: flask
+      MYSQL_PASSWORD: password
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - app
+
+volumes:
+  mysql-data:
+    driver: local
+  jenkins_home:
+    driver: local

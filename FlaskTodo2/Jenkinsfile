@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    app = docker.build("flask_app:latest")
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                script {
+                    app.inside {
+                        sh 'pytest'
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    docker.compose.up('--build -d')
+                }
+            }
+        }
+    }
+    post {
+        always {
+            sh 'docker-compose down'
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Tests failed.'
+        }
+    }
+}
